@@ -8,21 +8,31 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 // getEnv retrieves an environment variable or returns a default value
 func getEnv(key, defaultValue string) string {
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Warning: Error loading .env file, using system environment variables")
+	} else {
+		log.Println(".env file loaded successfully")
+	}
 	value := os.Getenv(key)
+
 	if value == "" {
 		return defaultValue
 	}
+	// Print key and value
 	return value
 }
 
 // handleRoot handles both GET and POST requests to the root path
 func handleRoot(w http.ResponseWriter, r *http.Request) {
 	verifyToken := os.Getenv("VERIFY_TOKEN")
-
 	switch r.Method {
 	case http.MethodGet:
 		// Parse query parameters
@@ -36,7 +46,9 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(challenge))
 		} else {
-			w.WriteHeader(http.StatusForbidden)
+			log.Println("Webhook verification failed")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("holo"))
 		}
 
 	case http.MethodPost:
